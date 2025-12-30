@@ -6,6 +6,7 @@ connection = sql.connect(
     http_path="/sql/1.0/warehouses/76ac6ed093e25402",
     access_token="")
 
+
 cursor = connection.cursor()
 
 cursor.execute("SELECT * from range(10)")
