@@ -7,6 +7,7 @@ connection = sql.connect(
     access_token="")
 
 
+
 cursor = connection.cursor()
 
 cursor.execute("SELECT * from range(10)")
