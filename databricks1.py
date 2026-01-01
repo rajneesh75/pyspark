@@ -8,7 +8,10 @@ print("Loaded:", os.getenv("DATABRICKS_HOST"), os.getenv("DATABRICKS_TOKEN"), os
 spark = (
     SparkSession.builder
     .remote(
-        "sc://dbc-c379cba2-8489.cloud.databricks.com:443/")
+        os.getenv("DATABRICKS_HOST"),
+        os.getenv("DATABRICKS_TOKEN"),
+        os.getenv("DATABRICKS_CLUSTER_ID")
+    )
     .getOrCreate()
 )
 
