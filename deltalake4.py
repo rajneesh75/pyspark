@@ -16,3 +16,21 @@ print("Reading from deltalake")
 delta_path = "/tmp/delta/employees"
 delta_df = spark.read.format("delta").load(delta_path)
 delta_df.show()
+
+
+new_df = spark.createDataFrame(
+    [(6, "Frank", 3000, "IT")],
+    ["id", "name", "salary", "dept"]
+)
+
+print("Writing to deltalake")
+new_df.write \
+    .format("delta") \
+    .mode("append") \
+    .option("mergeSchema", "true") \
+    .save(delta_path)
+
+print("Reading from deltalake")
+delta_path = "/tmp/delta/employees"
+delta_df = spark.read.format("delta").load(delta_path)
+delta_df.show()
