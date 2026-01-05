@@ -8,5 +8,5 @@ venv/
 .env
 .env.*
 
-/spark-warehouse/dept/
-/spark-warehouse/employees/
+/spark-warehouse/
+
