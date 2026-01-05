@@ -25,3 +25,9 @@ delta_table.toDF().show()
 print("Registering Delta Table as SQL Temporary View")
 delta_df.createOrReplaceTempView("people")
 spark.sql("""SELECT * FROM people""").show()
+
+print("Saving Delta Table as SQL Table")
+delta_df.write.mode("overwrite").saveAsTable("employees")
+
+print("Querying Delta Table as SQL Table")
+spark.sql("""SELECT * FROM employees""").show()
