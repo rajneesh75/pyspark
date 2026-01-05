@@ -1,0 +1,11 @@
+# created by virtualenv automatically
+# Virtual environment
+venv/
+.venv/
+
+# Environment variables / secrets
+.env
+.env.*
+
+/spark-warehouse/dept/
+/spark-warehouse/employees/
