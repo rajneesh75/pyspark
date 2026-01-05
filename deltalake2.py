@@ -20,7 +20,7 @@ data = [
 df = spark.createDataFrame(data, ["id", "name", "salary"])
 df.show()
 
-delta_path = "/tmp/delta/employees"
+delta_path = "/home/rajneesh/deltalake/employees"
 df.write.format("delta").mode("overwrite").save(delta_path)
 
 print("Appending bad data to Delta Lake")
