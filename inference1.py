@@ -9,24 +9,19 @@ from pyspark.sql.functions import (
 )
 from pyspark.sql.types import StringType
 
-# -------------------------------------------------------------------
-# 1. Spark Session with Delta
-# -------------------------------------------------------------------
-
 spark = (
     SparkSession.builder
     .appName("OSS-Inference-Table")
+    .enableHiveSupport()
     .config("spark.jars.packages", "io.delta:delta-spark_2.13:4.0.0")
     .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
-    .config(
-        "spark.sql.catalog.spark_catalog",
-        "org.apache.spark.sql.delta.catalog.DeltaCatalog"
-    )
+    .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
+    .config("spark.sql.warehouse.dir", "/home/rajneesh/Python/pyspark/spark-warehouse")
     .getOrCreate()
 )
 
 spark.sparkContext.setLogLevel("ERROR")
-print("✅ Spark Session created")
+print("Spark Session created")
 
 # Enable schema evolution
 spark.conf.set("spark.databricks.delta.schema.autoMerge.enabled", "true")
@@ -56,7 +51,6 @@ features_df = input_df.select(*FEATURE_COLS)
 # -------------------------------------------------------------------
 
 start_time = time.time()
-
 pdf = features_df.toPandas()
 
 # 🔑 NEVER mutate input features
@@ -94,9 +88,6 @@ inference_df = (
     .withColumn("error_message", lit(None).cast(StringType()))
 )
 
-# -------------------------------------------------------------------
-# 6. Write to Delta Inference Table  ⭐⭐
-# -------------------------------------------------------------------
 print("Writing inference data to Delta table")
 
 spark.sql("CREATE SCHEMA IF NOT EXISTS ml_prod")
@@ -104,11 +95,8 @@ inference_df.write.format("delta").mode("append").saveAsTable(
     "ml_prod.inference_customer_churn"
 )
 
-print("✅ Inference data written to Delta table")
+print("Inference data written to Delta table")
 
-# -------------------------------------------------------------------
-# 7. Verify
-# -------------------------------------------------------------------
 
 spark.sql("""
     SELECT inference_id, model_version, predictions.score, event_time

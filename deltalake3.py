@@ -1,33 +1,34 @@
 from pyspark.sql import SparkSession
 from delta.tables import DeltaTable
 
-builder = (
+spark = (
     SparkSession.builder
-    .appName("DeltaSpark4")
+    .appName("test")
+    .enableHiveSupport()
     .config("spark.jars.packages", "io.delta:delta-spark_2.13:4.0.0")
     .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
     .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
+    .config("spark.sql.warehouse.dir", "./spark-warehouse")
+    .getOrCreate()
 )
 
-spark = builder.getOrCreate()
-delta_path = "/home/rajneesh/deltalake/employees"
-
 print("Reading from deltalake")
-delta_df = spark.read.format("delta").load(delta_path)
+delta_df = spark.read.format("delta").table("employees")
 delta_df.show()
 
-print("Creating Delta Table object")
-delta_table = DeltaTable.forPath(spark, delta_path)
+print("Creating external Table object")
+manual_path = "/home/rajneesh/deltalake/employees"
+delta_table = DeltaTable.forPath(spark, manual_path)
 delta_table.toDF().show()
 
 print("Updating")
 delta_table.update(condition="name = 'Bob'", set={"salary": "50000"})
 
-print("Writing to Delta Lake")
-delta_df.write.format("delta").mode("overwrite").option("overwriteSchema", "true").save(delta_path)
+print("Writing external table")
+delta_df.write.mode("overwrite").option("overwriteSchema", "true").save(manual_path)
 
-print("Reading from Delta Lake")
-delta_df = spark.read.format("delta").load(delta_path)
+print("Reading external table")
+delta_df = spark.read.load(manual_path)
 delta_df.show()
 
 # print("Appending bad data to Delta Lake")
