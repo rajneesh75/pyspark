@@ -10,3 +10,6 @@ venv/
 
 /spark-warehouse/
 
+/input_features/
+/my-app/
+/myapp/

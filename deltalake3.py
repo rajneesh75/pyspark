@@ -1,5 +1,4 @@
 from pyspark.sql import SparkSession
-from delta import configure_spark_with_delta_pip
 from delta.tables import DeltaTable
 
 builder = (
@@ -10,7 +9,7 @@ builder = (
     .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
 )
 
-spark = configure_spark_with_delta_pip(builder).getOrCreate()
+spark = builder.getOrCreate()
 delta_path = "/home/rajneesh/deltalake/employees"
 
 print("Reading from deltalake")

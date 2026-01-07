@@ -1,7 +1,6 @@
 from pyspark.sql import SparkSession
 
 
-
 builder = (
     SparkSession.builder
     .appName("DeltaSpark4")
