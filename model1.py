@@ -16,3 +16,5 @@ model = LogisticRegression()
 model.fit(X, y)
 
 joblib.dump(model, "churn_model.pkl")
+print(model.feature_names_in_)
+print("Model trained and saved as churn_model.pkl")
