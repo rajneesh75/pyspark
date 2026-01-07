@@ -1,34 +1,22 @@
 import time
 import joblib
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import (
-    lit,
-    current_timestamp,
-    struct,
-    expr
-)
+from pyspark.sql.functions import (lit, current_timestamp, struct, expr)
 from pyspark.sql.types import StringType
 
 spark = (
     SparkSession.builder
-    .appName("OSS-Inference-Table")
+    .appName("test")
     .enableHiveSupport()
     .config("spark.jars.packages", "io.delta:delta-spark_2.13:4.0.0")
     .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
     .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
-    .config("spark.sql.warehouse.dir", "/home/rajneesh/Python/pyspark/spark-warehouse")
+    .config("spark.sql.warehouse.dir", "./spark-warehouse")
+    .config("spark.databricks.delta.schema.autoMerge.enabled", "true")
     .getOrCreate()
 )
 
-spark.sparkContext.setLogLevel("ERROR")
-print("Spark Session created")
-
-# Enable schema evolution
-spark.conf.set("spark.databricks.delta.schema.autoMerge.enabled", "true")
-
-# -------------------------------------------------------------------
-# 2. Load Model
-# -------------------------------------------------------------------
+print("Loading pre-trained model")
 
 model = joblib.load("churn_model.pkl")
 
@@ -38,17 +26,9 @@ MODEL_RUN_ID = "run_2026_01_07"
 
 FEATURE_COLS = ["age", "income", "city"]
 
-# -------------------------------------------------------------------
-# 3. Read Input Features
-# -------------------------------------------------------------------
-
-input_df = spark.read.parquet("input_features")
-
+input_df = spark.read.format("delta").table("input_features")
 features_df = input_df.select(*FEATURE_COLS)
-
-# -------------------------------------------------------------------
-# 4. Inference (SAFE sklearn usage)
-# -------------------------------------------------------------------
+features_df.show(5)
 
 start_time = time.time()
 pdf = features_df.toPandas()
@@ -62,10 +42,6 @@ pdf["score"] = model.predict_proba(X)[:, 1]
 latency_ms = int((time.time() - start_time) * 1000)
 
 pred_df = spark.createDataFrame(pdf)
-
-# -------------------------------------------------------------------
-# 5. Build Inference Table Schema
-# -------------------------------------------------------------------
 
 print("Building inference DataFrame")
 inference_df = (
@@ -90,17 +66,14 @@ inference_df = (
 
 print("Writing inference data to Delta table")
 
-spark.sql("CREATE SCHEMA IF NOT EXISTS ml_prod")
-inference_df.write.format("delta").mode("append").saveAsTable(
-    "ml_prod.inference_customer_churn"
-)
+# spark.sql("CREATE SCHEMA IF NOT EXISTS ml_prod")
+inference_df.write.format("delta").mode("append").saveAsTable("inference_customer_churn")
 
 print("Inference data written to Delta table")
 
-
 spark.sql("""
-    SELECT inference_id, model_version, predictions.score, event_time
-    FROM ml_prod.inference_customer_churn
+    SELECT inference_id, predictions.score, event_time
+    FROM inference_customer_churn
     ORDER BY event_time DESC
-    LIMIT 5
+    LIMIT 10
 """).show(truncate=False)
