@@ -14,3 +14,6 @@ venv/
 /my-app/
 /myapp/
 /metastore_db/
+/output/
+/data/
+/chk/

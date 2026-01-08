@@ -9,12 +9,18 @@ def square(x):
 
 square_udf = udf(square, IntegerType())
 
-spark = SparkSession.builder \
-    .appName("Test") \
-    .master("local[*]") \
+spark = (
+    SparkSession.builder
+    .appName("test")
+    .enableHiveSupport()
+    .config("spark.jars.packages", "io.delta:delta-spark_2.13:4.0.0")
+    .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
+    .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
+    .config("spark.sql.warehouse.dir", "./spark-warehouse")
+    .config("spark.sql.cli.print.header", "true")
+    .config("spark.sql.cli.pretty", "true")
     .getOrCreate()
-
-spark.sparkContext.setLogLevel("INFO")
+)
 
 teachers = [
     (1, "Raj", 35, 1),

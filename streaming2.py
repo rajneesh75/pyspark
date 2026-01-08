@@ -1,5 +1,6 @@
 from pyspark.sql import SparkSession
 
+
 spark = (
     SparkSession.builder
     .appName("test")
@@ -10,18 +11,22 @@ spark = (
     .config("spark.sql.warehouse.dir", "./spark-warehouse")
     .config("spark.sql.cli.print.header", "true")
     .config("spark.sql.cli.pretty", "true")
+    .config(
+        "spark.sql.streaming.stateStore.providerClass",
+        "org.apache.spark.sql.execution.streaming.state.RocksDBStateStoreProvider")
     .getOrCreate()
 )
 
-data = [
-    (1, "Raj", 35),
-    (2, "Amit", 30),
-    (3, "Neha", 28)
-]
+schema = "user_id INT, event STRING, ts TIMESTAMP"
+print("Reading streaming data from ./data/events")
 
-columns = ["id", "name", "age"]
+spark.readStream \
+    .format("json") \
+    .schema(schema) \
+    .load("./data/events") \
+    .writeStream \
+    .format("delta") \
+    .option("checkpointLocation", "./chk/events") \
+    .toTable("events_bronze")\
+    .awaitTermination()
 
-df = spark.createDataFrame(data, columns)
-#df.explain(True)
-df.show()
-df.printSchema()
