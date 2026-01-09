@@ -1,5 +1,6 @@
+from pyspark.sql.window import Window
+from pyspark.sql.functions import *
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import current_timestamp
 
 spark = (
     SparkSession.builder
@@ -12,7 +13,6 @@ spark = (
     .getOrCreate()
 )
 
-
 bronze_df = (
     spark.read
     .option("multiline", "true")
@@ -21,5 +21,6 @@ bronze_df = (
 )
 
 bronze_df.show()
-bronze_df.write.format("delta").mode("overwrite").saveAsTable("events_bronze")
-spark.sql("SELECT * FROM events_bronze").show()
+
+window = Window.partitionBy("event_id").orderBy(col("ingestion_ts").desc())
+print(window)
