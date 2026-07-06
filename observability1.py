@@ -1,4 +1,3 @@
-from pyspark.sql.window import Window
 from pyspark.sql.functions import *
 from pyspark.sql import SparkSession
 
@@ -10,25 +9,8 @@ spark = (
     .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
     .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
     .config("spark.sql.warehouse.dir", "./spark-warehouse")
+    .config("spark.sql.hive.metastore.version", "2.3.10")
+    .config("spark.sql.debug.maxToStringFields", "100")
+    .config("spark.sql.hive.metastore.jars", "builtin")
     .getOrCreate()
 )
-
-bronze_df = (
-    spark.read
-    .option("multiline", "true")
-    .json("./data/events1/events.json")
-    .withColumn("ingestion_ts", current_timestamp())
-)
-
-bronze_df.show()
-
-window = Window.partitionBy("event_id").orderBy(col("ingestion_ts").desc())
-
-silver_df = (
-    bronze_df
-    .withColumn("rn", row_number().over(window))
-    .filter(col("rn") == 1)
-    .drop("rn")
-)
-print("Silver DataFrame after Deduplication:")
-silver_df.show()
