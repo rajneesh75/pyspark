@@ -37,7 +37,7 @@ def add(a: int, b: int) -> int:
 
 
 tools = [multiply, add]
-llm = ChatOpenAI(model="gpt-4.1-mini", temperature=0, api_key=api_key)
+llm = ChatOpenAI(model="gpt-5.5", temperature=0, api_key=api_key)
 llm_with_tools = llm.bind_tools(tools)
 
 
